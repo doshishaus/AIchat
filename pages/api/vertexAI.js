@@ -24,6 +24,7 @@ if (!admin.apps.length) {
 const clientOptions = {
   project: 'miyazaki-430102',
   location: 'us-central1',
+  
 };
 
 const vertexAI = new VertexAI(clientOptions);
@@ -57,7 +58,7 @@ const generativeModel = vertexAI.preview.getGenerativeModel({
   systemInstruction: {
     parts: [
       {
-        text: `あなたは文章の編集者です。ユーザからMBTIのタイプと今日会った嫌なことの内容をテキストで受け取ります。それをMBTIのタイプに沿って、面白い文章に書き直す役割を担っています。ユーザの視点から、嫌なことを面白い文章として書き直してください。分の量は80文字程度にして`,
+        text: `あなたは文章の編集者です。ユーザからMBTIのタイプと今日あった嫌なことの内容をテキストで受け取ります。それをMBTIのタイプに沿って、面白い文章に書き直す役割を担っています。ユーザの視点から、嫌なことを面白い文章として書き直してください。分の量は80文字程度にして`,
       },
     ],
   },
