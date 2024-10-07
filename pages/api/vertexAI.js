@@ -2,6 +2,9 @@ const { VertexAI } = require('@google-cloud/vertexai');
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../../firebase';
 import admin from 'firebase-admin';
+import dotenv from "dotenv";
+
+dotenv.config();
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -20,27 +23,34 @@ if (!admin.apps.length) {
     })
   });
 }
+let vertexAI;
+try {
+  vertexAI = new VertexAI({
+    location: 'us-central1',
+    credentials: {
+      type: process.env.GOOGLE_TYPE,
+      project_id: process.env.GOOGLE_PROJECT_ID,
+      private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
+      private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      client_email: process.env.GOOGLE_CLIENT_EMAIL,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      auth_uri: process.env.GOOGLE_AUTH_URI,
+      token_uri: process.env.GOOGLE_TOKEN_URI,
+      auth_provider_x509_cert_url: process.env.GOOGLE_AUTH_PROVIDER_X509_CERT_URL,
+      client_x509_cert_url: process.env.GOOGLE_CLIENT_X509_CERT_URL,
+    },
+    project: process.env.GOOGLE_PROJECT_ID,
+  });
 
-const vertexAI = new VertexAI({
-  project: "miyazaki-430102",
-  location: 'us-central1', // 使用するリージョン
-  credentials: {
-    type: process.env.GOOGLE_TYPE,
-    project_id: process.env.GOOGLE_PROJECT_ID,
-    private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
-    private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),  // 改行を適切に処理
-    client_email: process.env.GOOGLE_CLIENT_EMAIL,
-    client_id: process.env.GOOGLE_CLIENT_ID,
-    auth_uri: process.env.GOOGLE_AUTH_URI,
-    token_uri: process.env.GOOGLE_TOKEN_URI,
-    auth_provider_x509_cert_url: process.env.GOOGLE_AUTH_PROVIDER_X509_CERT_URL,
-    client_x509_cert_url: process.env.GOOGLE_CLIENT_X509_CERT_URL,
-  },
-});
+  console.log('Vertex AIの認証は成功しました');
+} catch (error) {
+  console.error('Vertex AIの認証に失敗しました: ', error);
+  throw new Error('Vertex AIの認証に失敗しました');
+}
 const model = 'gemini-1.5-pro-001';
 
 const generativeModel = vertexAI.preview.getGenerativeModel({
-  model: model,
+  model: 'gemini-1.5-pro-001',
   generationConfig: {
     maxOutputTokens: 8192,
     temperature: 1,
@@ -73,6 +83,7 @@ const generativeModel = vertexAI.preview.getGenerativeModel({
   },
 });
 
+
 export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { mbti, text, userId, userName } = req.body;
@@ -93,40 +104,58 @@ export default async function handler(req, res) {
     };
 
     try {
-      console.log('Vertex AIにリクエスト送信:', JSON.stringify(request, null, 2));
+      console.log('Vertex AIにリクエスト送信(サーバサイド):', JSON.stringify(request, null, 2));
+
+      // ストリームレスポンスを取得
       const streamingResp = await generativeModel.generateContentStream(request);
+      console.log("ストリームのレスポンスを受信しました:", streamingResp);
 
       let aggregatedResponse = '';
-      for await (const item of streamingResp.stream) {
-        if (item.candidates) {
-          for (const candidate of item.candidates) {
-            if (candidate.content && candidate.content.parts) {
-              aggregatedResponse += candidate.content.parts.map(part => part.text).join('');
-            } else if (candidate.safetyRatings) {
-              console.error('セーフティチェックによりブロックされました:', JSON.stringify(candidate.safetyRatings, null, 2));
-            } else {
-              console.error('予期しないレスポンス形式:', JSON.stringify(candidate, null, 2));
+
+      try {
+        // ストリームのアイテムを処理
+        for await (const item of streamingResp.stream) {
+          console.log('ストリームのアイテムを処理中:', item);
+
+          if (item.candidates) {
+            for (const candidate of item.candidates) {
+              if (candidate.content && candidate.content.parts) {
+                aggregatedResponse += candidate.content.parts.map(part => part.text).join('');
+              } else if (candidate.safetyRatings) {
+                console.error('セーフティチェックによりブロックされました:', JSON.stringify(candidate.safetyRatings, null, 2));
+              } else {
+                console.error('予期しないレスポンス形式 (候補あり):', JSON.stringify(candidate, null, 2));
+              }
             }
+          } else {
+            console.error('予期しないレスポンス形式 (候補なし):', JSON.stringify(item, null, 2));
           }
-        } else {
-          console.error('予期しないレスポンス形式:', JSON.stringify(item, null, 2));
         }
+      } catch (streamError) {
+        console.error('ストリームの処理中にエラーが発生しました:', streamError);
+        throw streamError; // ストリーム処理のエラーは再スロー
       }
 
       console.log('Vertex AIからのレスポンス受信:', aggregatedResponse);
 
-      // Firestoreに保存
-      const docRef = await addDoc(collection(db, "posts"), {
-        userId,
-        userName,
-        mbti,
-        text,
-        response: aggregatedResponse,
-        timestamp: new Date()
-      });
+      try {
+        // Firestoreに保存
+        const docRef = await addDoc(collection(db, "posts"), {
+          userId,
+          userName,
+          mbti,
+          text,
+          response: aggregatedResponse,
+          timestamp: new Date()
+        });
 
-      console.log("Document written with ID: ", docRef.id);
-      res.status(200).json({ response: aggregatedResponse });
+        console.log("Document written with ID: ", docRef.id);
+        res.status(200).json({ response: aggregatedResponse });
+      } catch (firestoreError) {
+        console.error('Firestoreへの保存時にエラーが発生しました:', firestoreError);
+        res.status(500).json({ error: 'Firestore保存エラー', details: firestoreError.message });
+      }
+
     } catch (error) {
       console.error('予測作成エラー:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
       res.status(500).json({ error: '予測作成エラー', details: error.message });

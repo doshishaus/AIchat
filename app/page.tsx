@@ -227,9 +227,11 @@ export default function Home() {
                                 <Typography variant='body1' fontSize="20px" textAlign="center">変換！</Typography>
                                 <Typography> {prediction}</Typography>
                             </Stack>
-                            <Link href="/chat" className='block'>
-                                <Button>チャットページへ</Button>
-                            </Link>
+                            <Stack textAlign="right">
+                                <Link href="/chat" className='block'>
+                                    <Button>チャットページへ</Button>
+                                </Link>
+                            </Stack>
                         </DialogContent>
                     </Dialog>
                 </div>
