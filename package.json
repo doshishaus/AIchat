@@ -12,6 +12,7 @@
         "@emotion/react": "^11.13.3",
         "@emotion/styled": "^11.13.0",
         "@fontsource/roboto": "^5.1.0",
+        "@google-cloud/aiplatform": "^3.29.0",
         "@google-cloud/firestore": "^7.10.0",
         "@google-cloud/language": "^6.5.0",
         "@google-cloud/speech": "^6.7.0",
