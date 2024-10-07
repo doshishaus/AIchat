@@ -5,7 +5,11 @@ import { protos } from '@google-cloud/aiplatform/build/protos/protos';
 
 const clientOptions = {
     apiEndpoint: 'us-central1-aiplatform.googleapis.com',
-    keyFilename: 'keyfile.json', // サービスアカウントキーのパス
+    credentials: {
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),  // 改行の処理
+    },
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
 };
 
 const client = new PredictionServiceClient(clientOptions);

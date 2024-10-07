@@ -9,7 +9,11 @@ const unlinkFile = util.promisify(fs.unlink);
 const upload = multer({ dest: 'uploads/' });
 
 const speechClient = new SpeechClient({
-  keyFilename: 'keyfile.json',
+  credentials: {
+    client_email: process.env.GOOGLE_CLIENT_EMAIL,
+    private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),  // 改行の処理
+  },
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,  // プロジェクトID
 });
 
 export const config = {
