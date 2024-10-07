@@ -2,7 +2,6 @@ const { VertexAI } = require('@google-cloud/vertexai');
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../../firebase';
 import admin from 'firebase-admin';
-import serviceAccount from '../../keyfile.json';
 
 if (!admin.apps.length) {
   admin.initializeApp({
