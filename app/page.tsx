@@ -44,6 +44,11 @@ export default function Home() {
 
     /** MBTIを保存する関数 */
     const handleSave = useCallback(async () => {
+        if (!user) {
+            setError('ログインが必要です');
+            console.error('User is not authenticated');
+            return;
+        }
         if (mbti) {
             try {
                 await axios.post('/api/saveMBTI', { userId: user.uid, mbti });
@@ -82,8 +87,13 @@ export default function Home() {
     /**  */
     const isSaveDisabled = useMemo(() => mbti !== "" && mbti === userMbti, [mbti, userMbti]);
 
-    /** 録音を開始するボタン */
+    /** 生成を開始するボタン */
     const handleRecord = useCallback(async () => {
+        if (!user) {
+            setError('ログインが必要です');
+            console.error('User is not authenticated');
+            return;
+        }
         if (audioBlob) {
             const formData = new FormData();
             formData.append('audio', audioBlob, 'audio.webm');
@@ -133,7 +143,7 @@ export default function Home() {
                 </Box>
             ) : (
                 <div>
-                    <Paper sx={{display:"flex", justifyContent:"space-between" , alignItems:"center",padding:1}}>
+                    <Paper sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: 1 }}>
                         <Button variant='outlined' startIcon={<ArrowBack />} onClick={logout}>戻る</Button>
                         <Typography>こんにちは、{user.displayName}さん</Typography>
                     </Paper>
