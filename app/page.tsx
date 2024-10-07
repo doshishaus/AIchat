@@ -9,7 +9,7 @@ import Image from 'next/image';
 import bg from "@/public/bg-top.png";
 import topimg from "@/public/topicon.png";
 import talkicon from "@/public/talkicon.png";
-import { Box, Button, Dialog, DialogContent, FormControl, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Typography } from "@mui/material";
+import { Box, Button, Dialog, DialogContent, Divider, FormControl, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Typography } from "@mui/material";
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
@@ -39,6 +39,7 @@ export default function Home() {
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isOpen, setIsOpen] = useState<boolean>(false);
+    const [isStopOpen, setIsStopOpen] = useState<boolean>(false);
     const [userMbti, setUserMbti] = useState("");
 
 
@@ -200,7 +201,6 @@ export default function Home() {
                                         <IconButton onClick={stopRecording} size='large' color='error'>
                                             <Stop fontSize='large' />
                                         </IconButton>
-
                                         <Button onClick={handleRecord} variant='contained' >
                                             ぐちを生成/投稿
                                         </Button>
@@ -218,14 +218,18 @@ export default function Home() {
                     </Paper>
                     <Dialog open={isOpen} >
                         <DialogContent sx={{ padding: 2, gap: 1 }}>
-                            <Stack>
+                            <Stack paddingBottom={1}>
                                 <Typography variant='body1' fontSize="20px" textAlign="center">あなたが言ったことは...</Typography>
                                 <Typography> {recordedText}</Typography>
                             </Stack>
-                            <Stack>
+                            <Divider />
+                            <Stack >
                                 <Typography variant='body1' fontSize="20px" textAlign="center">変換！</Typography>
                                 <Typography> {prediction}</Typography>
                             </Stack>
+                            <Link href="/chat" className='block'>
+                                <Button>チャットページへ</Button>
+                            </Link>
                         </DialogContent>
                     </Dialog>
                 </div>
