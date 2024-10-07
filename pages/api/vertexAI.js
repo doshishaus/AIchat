@@ -26,20 +26,8 @@ if (!admin.apps.length) {
 let vertexAI;
 try {
   vertexAI = new VertexAI({
-    location: 'us-central1',
-    credentials: {
-      type: process.env.GOOGLE_TYPE,
-      project_id: process.env.GOOGLE_PROJECT_ID,
-      private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
-      private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      client_email: process.env.GOOGLE_CLIENT_EMAIL,
-      client_id: process.env.GOOGLE_CLIENT_ID,
-      auth_uri: process.env.GOOGLE_AUTH_URI,
-      token_uri: process.env.GOOGLE_TOKEN_URI,
-      auth_provider_x509_cert_url: process.env.GOOGLE_AUTH_PROVIDER_X509_CERT_URL,
-      client_x509_cert_url: process.env.GOOGLE_CLIENT_X509_CERT_URL,
-    },
     project: process.env.GOOGLE_PROJECT_ID,
+    location: 'us-central1',
   });
 
   console.log('Vertex AIの認証は成功しました');
@@ -50,7 +38,7 @@ try {
 const model = 'gemini-1.5-pro-001';
 
 const generativeModel = vertexAI.preview.getGenerativeModel({
-  model: 'gemini-1.5-pro-001',
+  model: model,
   generationConfig: {
     maxOutputTokens: 8192,
     temperature: 1,
