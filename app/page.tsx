@@ -111,6 +111,12 @@ export default function Home() {
 
                 // Vertex AIに送信
                 console.log('テキストを /api/vertexAI に送信');
+                console.log('送信するデータ:', {
+                    text: transcript,
+                    mbti: mbti,
+                    userId: user?.uid,
+                    userName: user?.displayName,
+                });
                 const aiResponse = await axios.post('/api/vertexAI', { text: transcript, mbti, userId: user.uid, userName: user.displayName });
                 console.log('Vertex AIからのレスポンス受信:', aiResponse.data.response);
                 setPrediction(aiResponse.data.response);
