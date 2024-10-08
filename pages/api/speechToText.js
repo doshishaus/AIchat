@@ -1,12 +1,12 @@
 // pages/api/speechToText.js
 import { SpeechClient } from '@google-cloud/speech';
 import multer from 'multer';
-import fs from 'fs';
-import util from 'util';
 
-const unlinkFile = util.promisify(fs.unlink);
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+});
 
-const upload = multer({ dest: 'uploads/' });
 
 const speechClient = new SpeechClient({
   credentials: {
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
         return;
       }
 
-      const audioBytes = fs.readFileSync(req.file.path).toString('base64');
+      const audioBytes = req.file.buffer.toString('base64');
 
       const audio = {
         content: audioBytes,
@@ -62,7 +62,6 @@ export default async function handler(req, res) {
         const transcription = response.results
           .map((result) => result.alternatives[0].transcript)
           .join('\n');
-        await unlinkFile(req.file.path); // Clean up the uploaded file
         res.status(200).json({ transcript: transcription });
       } catch (error) {
         console.error('Error processing audio file:', error);
