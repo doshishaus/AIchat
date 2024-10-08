@@ -9,12 +9,28 @@ import Image from 'next/image';
 import bg from "@/public/bg-top.png";
 import topimg from "@/public/topicon.png";
 import talkicon from "@/public/talkicon.png";
-import { Box, Button, Dialog, DialogContent, Divider, FormControl, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Typography } from "@mui/material";
-import ArrowBack from '@mui/icons-material/ArrowBack';
+import {
+    Box,
+    Button,
+    Dialog,
+    DialogContent,
+    Divider,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Paper,
+    Select,
+    Stack,
+    Typography
+} from "@mui/material";
+import {
+    ArrowBack,
+    Stop,
+    Mic as MicIcon
+} from '@mui/icons-material';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/firebase';
-import PlayArrow from '@mui/icons-material/PlayArrow';
-import Stop from '@mui/icons-material/Stop';
+
 
 
 
@@ -27,7 +43,6 @@ const mbtiTypes = [
     "INTJ", "INTP", "ENTJ", "ENTP", "INFJ", "INFP", "ENFJ", "ENFP",
     "ISTJ", "ISFJ", "ESTJ", "ESFJ", "ISTP", "ISFP", "ESTP", "ESFP"
 ];
-
 
 
 /** ログイン/ログアウト状態で切り替えを行う */
@@ -195,16 +210,43 @@ export default function Home() {
                                 onStop={(blobUrl, blob) => setAudioBlob(blob)}
                                 render={({ startRecording, stopRecording, mediaBlobUrl }) => (
                                     <Stack direction="row" gap={2} justifyContent="center">
-                                        <IconButton onClick={startRecording} size='large' color='success'>
-                                            <PlayArrow fontSize='large' />
-                                        </IconButton>
-                                        <IconButton onClick={stopRecording} size='large' color='error'>
-                                            <Stop fontSize='large' />
-                                        </IconButton>
+                                        <Button
+                                            onClick={() => {
+                                                startRecording();
+                                                setIsStopOpen(true);
+                                            }}
+                                            size='large'
+                                            color='success'
+                                            startIcon={<MicIcon fontSize='large' />}
+                                            variant='contained'
+                                        >
+                                            愚痴る！
+                                        </Button>
+                                        <Dialog open={isStopOpen}>
+                                            <DialogContent sx={{ padding: 2, gap: 1, display: "flex", flexDirection: "column" }}>
+                                                <Typography textAlign="center" variant='h5' component="p" color='success'>録音中...</Typography>
+                                                <Typography textAlign="center" variant='body2'>こんなことを喋ってみて！</Typography>
+                                                <Typography variant='body2' padding={1}>今日あったむかついたことは？<br />疲れちゃったことは？</Typography>
+                                                <Stack textAlign="center">
+                                                    <Button
+                                                        onClick={() => {
+                                                            stopRecording();
+                                                            setIsStopOpen(false);
+                                                        }}
+                                                        size='large'
+                                                        color='error'
+                                                        startIcon={<Stop fontSize='large' />}
+                                                        variant='contained'
+                                                    >
+                                                        停止！
+                                                    </Button>
+                                                </Stack>
+                                            </DialogContent>
+                                        </Dialog>
                                         <Button onClick={handleRecord} variant='contained' >
                                             ぐちを生成/投稿
                                         </Button>
-                                        {mediaBlobUrl && <audio src={mediaBlobUrl} controls />}
+                                        {/* {mediaBlobUrl && <audio src={mediaBlobUrl} controls />} */}
 
                                     </Stack>
                                 )}
