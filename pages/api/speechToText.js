@@ -1,11 +1,19 @@
 // pages/api/speechToText.js
 import { SpeechClient } from '@google-cloud/speech';
 import multer from 'multer';
+import { fileTypeFromBuffer } from 'file-type'; 
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
 });
+
+console.log("リプレイス実行前 ", process.env.GOOGLE_PRIVATE_KEY);
+// 置換を実行
+const privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
+
+// 置換後の状態を確認
+console.log("実行後 ", privateKey);
 
 
 const speechClient = new SpeechClient({
@@ -24,6 +32,7 @@ const speechClient = new SpeechClient({
   },
   projectId: process.env.GOOGLE_PROJECT_ID,
 });
+console.log(speechClient);
 
 export const config = {
   api: {
@@ -38,6 +47,22 @@ export default async function handler(req, res) {
       if (err) {
         res.status(500).json({ error: 'Error uploading file', details: err.message });
         return;
+      }
+
+      // MIMEタイプを確認する
+      const mimeType = req.file.mimetype;
+      console.log('Uploaded file MIMEタイプ:', mimeType);
+
+      // サポートされている形式かどうかをチェック
+      if (mimeType !== 'audio/webm' && mimeType !== 'audio/wav' && mimeType !== 'audio/mpeg') {
+        res.status(400).json({ error: 'Unsupported audio format' });
+        return;
+      }
+
+      // 必要に応じて、file-typeライブラリを使ってさらにファイル形式を厳密に確認できる
+      const fileType = await fileTypeFromBuffer(req.file.buffer);
+      if (fileType) {
+        console.log(`Detected file type: ${fileType.ext}, MIME type: ${fileType.mime}`);
       }
 
       const audioBytes = req.file.buffer.toString('base64');
@@ -59,11 +84,13 @@ export default async function handler(req, res) {
 
       try {
         const [response] = await speechClient.recognize(request);
+        console.log()
         const transcription = response.results
           .map((result) => result.alternatives[0].transcript)
           .join('\n');
         res.status(200).json({ transcript: transcription });
       } catch (error) {
+        console.log(speechClient);
         console.error('Error processing audio file:', error);
         res.status(500).json({ error: 'Error processing audio file', details: error.message });
       }
